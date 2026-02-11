@@ -17,6 +17,11 @@ async function updatePixels(pixels: number[]) {
       }),
     });
 
+    if (!response.ok) {
+      console.log(`Failed to update pixels, response: ${await response.text()}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     console.log(`Updated pixels, response status: ${response.status}`);
   } catch (error) {
     console.error("Error updating pixels:", error);
@@ -43,7 +48,7 @@ const ffmpeg = spawn("ffmpeg", [
   "scale=64:32:force_original_aspect_ratio=decrease,pad=64:32:(ow-iw)/2:(oh-ih)/2",
 
   "-r",
-  "1",
+  "3",
 
   "-pix_fmt",
   "rgb565le",
@@ -56,8 +61,8 @@ const ffmpeg = spawn("ffmpeg", [
 ]);
 
 ffmpeg.stdout.on("data", (data) => {
-  console.log(`Received ${data.length} bytes of pixel data`);
-  const pixels = new Uint16Array(data.buffer);
+  const pixels = new Uint16Array(data.buffer, data.byteOffset, 64 * 32);
+  console.log(`Received ${pixels.length} bytes of pixel data`);
   updatePixels(Array.from(pixels));
 });
 
